@@ -1,5 +1,5 @@
 # vscode
-.vscode/
-build/
-.exe
-.wav
+**/.vscode
+**/build
+*.exe
+*.wav
