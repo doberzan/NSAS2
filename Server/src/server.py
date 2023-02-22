@@ -1,6 +1,7 @@
 import socket
 import threading
 import time
+import os
 import datetime
 
 # Server port UDP
@@ -15,8 +16,14 @@ RUNNING = True
 
 CLIENT_SOCKETS = []
 PARTS = []
-PARTS.append(open('8BA_Part1.wav', 'rb').read())
-PARTS.append(open('8BA_Part2.wav', 'rb').read())
+
+def loadParts():
+    print("Loading Audio Parts:")
+    for file in os.listdir("."):
+        if file.endswith(".wav"):
+            PARTS.append(open(file, 'rb').read())
+            print(file)
+
 def listen(sock:socket):
     global RUNNING
     while RUNNING:
@@ -30,7 +37,7 @@ def listen(sock:socket):
             if message[0][:10] == b'DISCONNECT':
                 print(f'Client Disconnect: {message[1][0]}:{message[1][1]}')
                 CLIENT_SOCKETS.remove(message[1])
-            if message[0][:4] == b'YEET':
+            if message[0][:8] == b'DOWNLOAD':
                 print(f'Master Initiate Download: {message[1][0]}:{message[1][1]}')
                 for cli_sock in CLIENT_SOCKETS:
                     sock.sendto(b'DOWNLOAD', cli_sock)
@@ -52,7 +59,7 @@ def heartbeat(sock:socket):
     while RUNNING:
         for cli_sock in CLIENT_SOCKETS:
             sock.sendto(b'PING', cli_sock)
-        print('HEART BEAT')
+        # print('HEART BEAT')
         time.sleep(HEART_BEAT/1000)
 
 def download(dl_cli:socket, part_num):
@@ -69,7 +76,7 @@ def download_listen():
         with conn:
             print(f'Sending part to: {addr}')
             print(f'Part {part_num} Size: {len(PARTS[part_num])}')
-            print(f"TEST SIZE: {len(PARTS[part_num]).to_bytes(4, 'little')}")
+            #print(f"TEST SIZE: {len(PARTS[part_num]).to_bytes(4, 'little')}")
             conn.sendall(len(PARTS[part_num]).to_bytes(4, 'little'))
             conn.sendall(PARTS[part_num])
             conn.close()
@@ -81,6 +88,7 @@ def download_listen():
 
 def main():
     global RUNNING
+    loadParts()
     print(f'Binding server to port: {PORT}')
     SRV_SOCK.bind(("0.0.0.0",PORT))
     

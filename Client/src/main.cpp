@@ -90,15 +90,15 @@ int download_part()
             std::cout << "Audio Part Size: " << alloc_size << std::endl; 
             AUDIO_BUFFER = new char[alloc_size];
             int ptr = 0;
-            data_len = 204800;
+            data_len = 819200;
             for(int ptr=0; data_len > 0; ptr += data_len){
-                data_len = recv(dl_sock_fd, AUDIO_BUFFER+ptr, 204800, 0);
+                data_len = recv(dl_sock_fd, AUDIO_BUFFER+ptr, 819200, 0);
                 std::cout << "data_len: " << data_len << " PTR: " << ptr << std::endl;
             }
             std::cout << "Download Complete. DATA: " << AUDIO_BUFFER << std::endl;
-            FILE* pFile;
-            pFile = fopen("file.wav", "wb");
-            fwrite(AUDIO_BUFFER, sizeof(char), alloc_size, pFile);
+            //FILE* pFile;
+            //pFile = fopen("file.wav", "wb");
+            //fwrite(AUDIO_BUFFER, sizeof(char), alloc_size, pFile);
             char* test = new char[10000];
             memset(test, 0x40, 10000);
             PlaySound(NULL, NULL, SND_ASYNC);
@@ -107,6 +107,7 @@ int download_part()
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
     std::cout << "Download Failed" << std::endl;
+    return -1;
 }
 
 int wait_conn(){
@@ -147,12 +148,12 @@ int wait_conn(){
                 if (strcmp(buffer, "PING") == 0)
                 {
                     delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()-last).count();
-                    std::cout << "Server Response: " << delta-HEARTBEAT << std::endl;
+                    // std::cout << "Server Response: " << delta-HEARTBEAT << std::endl;
                     // std::this_thread::sleep_for(std::chrono::milliseconds(100-(delta%100)));
 
                     sendto(sock_fd, (const char *)msg, strlen(msg), 0x0, (const struct sockaddr *) &srv_addr, sock_len);
                     last = std::chrono::high_resolution_clock::now();
-                    std::cout << "Heart Beat: " << hb_count << std::endl;
+                    // std::cout << "Heart Beat: " << hb_count << std::endl;
                     
                     // Inc & check heart beat
                     hb_count ++;
@@ -171,7 +172,6 @@ int wait_conn(){
                     std::cout << "Downloading part..." << std::endl;
                     std::thread download_thread(download_part);
                     download_thread.join();
-                    std::cout << "DEBUG TEST MSG" << std::endl;
                     continue;
                 }
                 if(strcmp(buffer, "EXECUTE") == 0)
