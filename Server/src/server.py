@@ -7,7 +7,7 @@ import datetime
 # Server port UDP
 PORT = 8888
 # Check alive UDP
-HEART_BEAT = 100
+HEART_BEAT = 50
 # Number of sound sections to be played
 SECTIONS = 1
 

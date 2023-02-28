@@ -13,7 +13,7 @@
 
 #define MAX_BUFF 1024
 #define TRUE 1
-#define HEARTBEAT 100
+#define HEARTBEAT 50
 
 int RUNNING = 1;
 char* AUDIO_BUFFER;
@@ -56,8 +56,9 @@ int setup_client(char* address, int port)
     return 0;
 }
 
-int playAudio()
+int playAudio(int delta_avg)
 {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000-delta_avg));
     PlaySound((LPCSTR)AUDIO_BUFFER, NULL, SND_MEMORY | SND_ASYNC);
     return 0;
 }
@@ -117,8 +118,7 @@ int wait_conn(){
     auto last = std::chrono::high_resolution_clock::now();
     char buffer[MAX_BUFF];
     int delta;
-
-    int beats[10] = {0};
+    int hb_array[100] = {0};
 
     while (RUNNING)
     {
@@ -148,11 +148,11 @@ int wait_conn(){
                 if (strcmp(buffer, "PING") == 0)
                 {
                     delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()-last).count();
-                    // std::cout << "Server Response: " << delta-HEARTBEAT << std::endl;
-                    // std::this_thread::sleep_for(std::chrono::milliseconds(100-(delta%100)));
-
-                    sendto(sock_fd, (const char *)msg, strlen(msg), 0x0, (const struct sockaddr *) &srv_addr, sock_len);
                     last = std::chrono::high_resolution_clock::now();
+                    std::cout << "Server Response: " << delta-HEARTBEAT << std::endl;
+                    // std::this_thread::sleep_for(std::chrono::milliseconds(100-(delta%100)));
+                    hb_array[hb_count%100] = delta-HEARTBEAT;
+                    //sendto(sock_fd, (const char *)msg, strlen(msg), 0x0, (const struct sockaddr *) &srv_addr, sock_len);
                     // std::cout << "Heart Beat: " << hb_count << std::endl;
                     
                     // Inc & check heart beat
@@ -177,7 +177,18 @@ int wait_conn(){
                 if(strcmp(buffer, "EXECUTE") == 0)
                 {
                     std::cout << "Executing..." << std::endl;
-                    playAudio();
+                    int delta_avg = 0;
+                    for (int i = 0; i < 10; i++)
+                    {
+                        if (hb_array[i] >= 0){
+                            delta_avg = delta_avg + hb_array[i];
+                        }else
+                        {
+                            delta_avg = delta_avg + -(hb_array[i]);
+                        }
+                    }
+                    delta_avg = delta_avg/10;
+                    playAudio(delta_avg);
                     continue;
                 }
                 if(strcmp(buffer, "KILL") == 0)
