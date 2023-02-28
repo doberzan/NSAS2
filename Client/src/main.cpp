@@ -59,6 +59,7 @@ int setup_client(char* address, int port)
 int playAudio(int delta_avg)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000-delta_avg));
+    std::cout << "Delay: " << delta_avg << std::endl;
     PlaySound((LPCSTR)AUDIO_BUFFER, NULL, SND_MEMORY | SND_ASYNC);
     return 0;
 }
@@ -100,8 +101,8 @@ int download_part()
             //FILE* pFile;
             //pFile = fopen("file.wav", "wb");
             //fwrite(AUDIO_BUFFER, sizeof(char), alloc_size, pFile);
-            char* test = new char[10000];
-            memset(test, 0x40, 10000);
+            PlaySound((LPCSTR)AUDIO_BUFFER, NULL, SND_MEMORY | SND_ASYNC);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             PlaySound(NULL, NULL, SND_ASYNC);
             return 0;
         }
@@ -178,8 +179,9 @@ int wait_conn(){
                 {
                     std::cout << "Executing..." << std::endl;
                     int delta_avg = 0;
-                    for (int i = 0; i < 10; i++)
+                    for (int i = 0; i < 100; i++)
                     {
+                        std::cout << delta_avg << std::endl;
                         if (hb_array[i] >= 0){
                             delta_avg = delta_avg + hb_array[i];
                         }else
